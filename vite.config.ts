@@ -145,6 +145,11 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5000,
       proxy: {
+        '/academic-api': {
+          target: 'http://localhost:8003',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/academic-api/, ''),
+        },
         '/api/v1': {
           target: 'http://localhost:8080',
           changeOrigin: true,
