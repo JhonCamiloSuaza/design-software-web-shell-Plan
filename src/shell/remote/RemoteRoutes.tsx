@@ -56,6 +56,13 @@ const monitoringCatalogs = {
 };
 
 function getRemoteProps(definition: (typeof REMOTE_DEFINITIONS)[number]): Record<string, unknown> {
+  if (definition.domain === 'academic-management') {
+    return {
+      basePath: definition.basePath,
+      apiBaseUrl: '/academic-api/api/v1',
+      getAccessToken: () => sessionStorage.getItem('sena.access_token') ?? undefined,
+    };
+  }
   if (definition.domain !== 'monitoring') return { basePath: definition.basePath };
 
   return {
