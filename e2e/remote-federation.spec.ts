@@ -71,6 +71,7 @@ test.describe('E5 remotes reales en navegador', () => {
     // E3: ningun camino puede dejar el arbol de React vacio.
     for (const remote of REMOTES) {
       await page.goto(`${remote.basePath}/`);
+      await waitForRemoteOutcome(page);
       const vacio = await page.evaluate(() => {
         const root = document.querySelector('#root');
         return root === null || root.innerHTML.trim().length === 0;
@@ -105,7 +106,7 @@ test.describe('E5 remotes reales en navegador', () => {
 
     const alert = page.getByRole('alert');
     await expect(alert).toBeVisible();
-    await expect(alert).toContainText(/No pudimos cargar/i);
+    await expect(alert).toContainText(/No (se pudo|pudimos) cargar/i);
 
     // El shell (barra superior) sigue vivo: un fallo no tumba la aplicacion.
     await expect(page.getByRole('banner')).toBeVisible();

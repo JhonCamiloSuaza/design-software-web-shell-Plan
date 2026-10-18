@@ -71,8 +71,8 @@ const stubPath = fileURLToPath(
   new URL('./src/shell/remote/__fixtures__/FederatedRemoteFixture.tsx', import.meta.url),
 );
 
-const stubAliasRecord = (): Record<string, string> =>
-  Object.fromEntries(REMOTE_DEFINITIONS.map((d) => [`${d.federationName}/App`, stubPath]));
+const stubAliasRecord = (names: readonly FederationName[] = REMOTE_NAMES): Record<string, string> =>
+  Object.fromEntries(names.map((name) => [`${name}/App`, stubPath]));
 
 const moduleRemoteRecord = (
   manifest: Partial<Record<FederationName, string>>,
@@ -88,13 +88,22 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const environment = resolveEnvironment(mode);
   const manifest = readManifest(environment);
-  const missing = REMOTE_NAMES.filter((name) => manifest[name] === undefined);
+  const requestedRemoteNames = (env['VITE_FEDERATED_REMOTES'] ?? '')
+    .split(',')
+    .map((name) => name.trim())
+    .filter((name): name is FederationName => REMOTE_NAMES.includes(name as FederationName));
+  const federatedRemoteNames = requestedRemoteNames.length > 0 ? requestedRemoteNames : REMOTE_NAMES;
+  const missing = federatedRemoteNames.filter((name) => manifest[name] === undefined);
 
   // El shell trabaja con stubs mientras los remotes no estan construidos ni desplegados,
-  // o cuando desarrollo pide explicitamente `VITE_REMOTE_SOURCE=mock`.
-  const useStubs = env['VITE_REMOTE_SOURCE'] !== 'federation' || missing.length > 0;
+  // o cuando desarrollo pide explicitamente `VITE_REMOTE_SOURCE=mock`. En la practica
+  // local se puede federar un unico dominio y conservar stubs para los demas.
+  const useFederation = env['VITE_REMOTE_SOURCE'] === 'federation' && missing.length === 0;
+  const stubbedRemoteNames = useFederation
+    ? REMOTE_NAMES.filter((name) => !federatedRemoteNames.includes(name))
+    : REMOTE_NAMES;
 
-  if (useStubs) {
+  if (!useFederation) {
     console.warn(
       `[federation] ${manifestFileFor(environment)} no declara: ${missing.join(', ')}. ` +
         'Se usaran stubs hasta que el ambiente declare las URLs.',
@@ -107,12 +116,16 @@ export default defineConfig(({ mode }) => {
       remoteManifestPlugin(),
       // El plugin de Federation solo se registra cuando hay URLs reales declaradas.
       // En modo stubs queda fuera y los imports se resuelven con el alias local.
-      ...(useStubs
+      ...(!useFederation
         ? []
         : [
             federation({
               name: FEDERATION_HOST_NAME,
-              remotes: moduleRemoteRecord(manifest),
+              remotes: moduleRemoteRecord(
+                Object.fromEntries(
+                  federatedRemoteNames.map((name) => [name, manifest[name]]),
+                ) as Partial<Record<FederationName, string>>,
+              ),
               shared: { ...SHARED_SINGLETONS },
               // El gate de tipos entre host y remote es `HU-SHELL-008`. Mientras tanto
               // se desactiva para no intentar descargar `@mf-types.zip` de remotes que
@@ -123,7 +136,7 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: {
-        ...(useStubs ? stubAliasRecord() : {}),
+        ...stubAliasRecord(stubbedRemoteNames),
         '@sena/frontend-platform': fileURLToPath(
           new URL('../design-software-frontend-platform-Plan/src/index.ts', import.meta.url),
         ),
