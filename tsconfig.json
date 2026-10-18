@@ -18,9 +18,9 @@
     "types": ["vitest/globals", "@testing-library/jest-dom", "vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@sena/frontend-platform": ["../design-software-frontend-platform/src/index.ts"],
-      "@sena/design-system": ["../design-software-design-system/src/index.ts"],
-      "@sena/design-system/components": ["../design-software-design-system/src/components/index.ts"]
+      "@sena/frontend-platform": ["../design-software-frontend-platform-Plan/src/index.ts"],
+      "@sena/design-system": ["../design-software-design-system-Plan/src/index.ts"],
+      "@sena/design-system/components": ["../design-software-design-system-Plan/src/components/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

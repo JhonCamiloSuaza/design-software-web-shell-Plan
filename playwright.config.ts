@@ -28,14 +28,28 @@ export default defineConfig({
 
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 
-  webServer: {
-    command: 'npm run dev',
-    url: `http://localhost:${SHELL_PORT}`,
-    reuseExistingServer: process.env['CI'] !== 'true',
-    timeout: 120_000,
-    env: {
-      // El smoke test existe para probar remotes reales, no stubs.
-      VITE_REMOTE_SOURCE: 'federation',
+  webServer: [
+    {
+      command: 'npm run dev -- --host 127.0.0.1',
+      cwd: '../design-software-academic-management-mfe-Plan',
+      url: 'http://localhost:5103/remoteEntry.js',
+      reuseExistingServer: process.env['CI'] !== 'true',
+      timeout: 120_000,
     },
-  },
+    {
+      command: 'npm run dev',
+      url: `http://localhost:${SHELL_PORT}`,
+      reuseExistingServer: process.env['CI'] !== 'true',
+      timeout: 120_000,
+      env: {
+        // El smoke test existe para probar remotes reales, no stubs.
+        VITE_REMOTE_SOURCE: 'federation',
+        // Esta entrega levanta academic-management localmente; los demas dominios
+        // conservan sus stubs para que no se requieran nueve procesos ajenos.
+        VITE_FEDERATED_REMOTES: 'academicManagementMfe',
+        VITE_SESSION_SOURCE: 'mock',
+        VITE_NOTIFICATION_SOURCE: 'mock',
+      },
+    },
+  ],
 });

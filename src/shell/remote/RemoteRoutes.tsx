@@ -1,4 +1,4 @@
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import { REMOTE_DEFINITIONS, type RemoteRegistry } from './remote-registry';
 import { RemoteBoundary } from './RemoteBoundary';
@@ -85,6 +85,7 @@ function getRemoteProps(definition: (typeof REMOTE_DEFINITIONS)[number]): Record
  */
 export const RemoteRoutes = ({ registry, manifestSource }: RemoteRoutesProps) => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   return (
     <Routes>
@@ -100,6 +101,7 @@ export const RemoteRoutes = ({ registry, manifestSource }: RemoteRoutesProps) =>
             }))}
             registryKind={registry.kind}
             manifestSource={manifestSource}
+            onNavigate={navigate}
           />
         }
       />
