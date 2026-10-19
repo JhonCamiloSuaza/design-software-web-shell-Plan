@@ -158,6 +158,10 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5000,
       proxy: {
+        '/api/v1/auth': {
+          target: 'http://localhost:8001',
+          changeOrigin: true,
+        },
         '/api/v1': {
           target: 'http://localhost:8003',
           changeOrigin: true,
