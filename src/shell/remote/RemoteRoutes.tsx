@@ -8,6 +8,8 @@ import { RemoteIndex } from '../components/RemoteIndex/RemoteIndex';
 export interface RemoteRoutesProps {
   registry: RemoteRegistry;
   manifestSource?: string;
+  /** JWT emitido por la sesion del Shell, cuando el ambiente usa autenticacion real. */
+  accessToken?: string;
 }
 
 interface ShellHttpRequest {
@@ -55,7 +57,17 @@ const monitoringCatalogs = {
   ],
 };
 
-function getRemoteProps(definition: (typeof REMOTE_DEFINITIONS)[number]): Record<string, unknown> {
+function getRemoteProps(
+  definition: (typeof REMOTE_DEFINITIONS)[number],
+  accessToken?: string,
+): Record<string, unknown> {
+  if (definition.domain === 'academic-management') {
+    return {
+      basePath: definition.basePath,
+      ...(accessToken === undefined ? {} : { accessToken }),
+    };
+  }
+
   if (definition.domain !== 'monitoring') return { basePath: definition.basePath };
 
   return {
@@ -83,7 +95,7 @@ function getRemoteProps(definition: (typeof REMOTE_DEFINITIONS)[number]): Record
  * Cuando el ambiente no declara URLs en `remotes.<env>.json`, los dominios no montan y
  * se muestra `RemoteUnavailable` en vez de una pantalla vacía.
  */
-export const RemoteRoutes = ({ registry, manifestSource }: RemoteRoutesProps) => {
+export const RemoteRoutes = ({ registry, manifestSource, accessToken }: RemoteRoutesProps) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
@@ -113,7 +125,7 @@ export const RemoteRoutes = ({ registry, manifestSource }: RemoteRoutesProps) =>
             path={`${definition.basePath}/*`}
             element={
               <RemoteBoundary domain={definition.domain} resetKey={definition.basePath}>
-                <Remote {...getRemoteProps(definition)} />
+                <Remote {...getRemoteProps(definition, accessToken)} />
               </RemoteBoundary>
             }
           />
